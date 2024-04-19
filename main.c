@@ -79,12 +79,11 @@ int main(void) {
 		{ CIRCLE, { 250.0f, 250.0f }, 70.0f },
 		{ CIRCLE, { 20.0f, 250.0f }, 40.0f },
 		{ SQUARE, { 400.0f, 250.0f }, 60.0f },
+		{ SQUARE, { 600.0f, 400.0f }, 100.0f },
 	};
 
 	InitWindow(700, 500, "Ray Marching");
-	SetTargetFPS(60);
-
-	Vector2 fixed = { 100.0f, 100.0f };
+	SetTargetFPS(24);
 
 	while (!WindowShouldClose()) {
 		BeginDrawing();
@@ -92,26 +91,35 @@ int main(void) {
 
 		draw_shapes(shapes, ARRLEN(shapes));
 
-		Vector2 p = fixed;
-		float dist = distance_to_shapes(p, shapes, ARRLEN(shapes));
-
-		Vector2 mouse_pos = GetMousePosition();
-		int upper_bound = 10;
-		while (dist > RM_EPSILON && upper_bound --> 0) {
-			DrawCircleLinesV(p, dist, WHITE);
-			float k = Vector2Length(Vector2Subtract(p, mouse_pos)) / dist;
-			p = CLITERAL(Vector2) {
-				.x = (mouse_pos.x - p.x) / k + p.x,
-				.y = (mouse_pos.y - p.y) / k + p.y,
-			};
-			// printf("%f\n", dist);
-			dist = distance_to_shapes(p, shapes, ARRLEN(shapes));
-			if (dist <= RM_EPSILON) {
-				DrawCircleV(p, 5.0f, RED);
+		Vector2 start = GetMousePosition();
+		for (float a = -PI; a <= PI; a += RM_EPSILON/100) {
+			Vector2 p = start;
+			float dist = distance_to_shapes(p, shapes, ARRLEN(shapes));
+			if (dist <= EPSILON) {
+				continue;
+			}
+			float g_dist = dist;
+			Vector2 ray = Vector2Add(start, CLITERAL(Vector2) { MAX_HEIGHT*sinf(a), MAX_HEIGHT*cosf(a) });
+			int upper_bound = 10;
+			while (1) {
+				float k = Vector2Length(Vector2Subtract(p, ray)) / dist;
+				p = CLITERAL(Vector2) {
+					.x = (ray.x - p.x) / k + p.x,
+					.y = (ray.y - p.y) / k + p.y,
+				};
+				// printf("%f\n", dist);
+				dist = distance_to_shapes(p, shapes, ARRLEN(shapes));
+				g_dist += dist;
+				if (dist <= RM_EPSILON) {
+					DrawLineV(start, p, GRAY);
+					DrawCircleV(p, 1.0f, GREEN);
+					break;
+				}
+				if (g_dist >= MAX_HEIGHT) {
+					break;
+				}
 			}
 		}
-
-		DrawLineV(fixed, mouse_pos, WHITE);
 		EndDrawing();
 	}
 
