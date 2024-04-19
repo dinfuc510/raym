@@ -1,0 +1,1 @@
+cl /I "../../include" main.c /O2 /MD rcore.obj  /link user32.lib raylib.lib winmm.lib kernel32.lib opengl32.lib gdi32.lib shell32.lib /LIBPATH:"../../lib" /OUT:raym.exe
