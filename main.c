@@ -4,6 +4,7 @@
 
 #define ARRLEN(arr) (sizeof((arr))/sizeof(*(arr)))
 #define MAX_HEIGHT 500
+#define RM_EPSILON 0.1
 
 typedef enum ShapeType {
 	SQUARE = 0,
@@ -83,18 +84,34 @@ int main(void) {
 	InitWindow(700, 500, "Ray Marching");
 	SetTargetFPS(60);
 
+	Vector2 fixed = { 100.0f, 100.0f };
+
 	while (!WindowShouldClose()) {
 		BeginDrawing();
 		ClearBackground(GetColor(0x1e1e1eff));
 
 		draw_shapes(shapes, ARRLEN(shapes));
 
+		Vector2 p = fixed;
+		float dist = distance_to_shapes(p, shapes, ARRLEN(shapes));
+
 		Vector2 mouse_pos = GetMousePosition();
-		float dist = distance_to_shapes(mouse_pos, shapes, ARRLEN(shapes));
-		if (dist > 0.01f && dist < MAX_HEIGHT) {
-			DrawCircleLinesV(mouse_pos, dist, WHITE);
+		int upper_bound = 10;
+		while (dist > RM_EPSILON && upper_bound --> 0) {
+			DrawCircleLinesV(p, dist, WHITE);
+			float k = Vector2Length(Vector2Subtract(p, mouse_pos)) / dist;
+			p = CLITERAL(Vector2) {
+				.x = (mouse_pos.x - p.x) / k + p.x,
+				.y = (mouse_pos.y - p.y) / k + p.y,
+			};
+			// printf("%f\n", dist);
+			dist = distance_to_shapes(p, shapes, ARRLEN(shapes));
+			if (dist <= RM_EPSILON) {
+				DrawCircleV(p, 5.0f, RED);
+			}
 		}
 
+		DrawLineV(fixed, mouse_pos, WHITE);
 		EndDrawing();
 	}
 
