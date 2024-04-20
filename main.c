@@ -110,7 +110,7 @@ int main(void) {
 
 	SetConfigFlags(FLAG_WINDOW_RESIZABLE);
 	InitWindow(700, 500, "Ray Marching");
-	SetTargetFPS(24);
+	SetTargetFPS(60);
 
 	bool draw_entire_shape = true;
 	while (!WindowShouldClose()) {
@@ -126,7 +126,7 @@ int main(void) {
 		}
 
 		int max_size = fmax(GetScreenWidth(), GetScreenHeight());
-		float step = MINIMUM_HIT_DISTANCE/(max_size/8);
+		float step = 1.0f/max_size;
 
 		Vector2 start = GetMousePosition();
 		for (float a = -PI; a <= PI; a += step) {
@@ -149,7 +149,16 @@ int main(void) {
 				total_dist += dist;
 				if (dist <= MINIMUM_HIT_DISTANCE) {
 					DrawLineV(start, p, GRAY);
-					DrawCircleV(p, 1.0f, GREEN);
+					float d = 1.0f;
+					DrawLineV(
+							CLITERAL(Vector2) { p.x - d, p.y },
+							CLITERAL(Vector2) { p.x + d, p.y },
+					GREEN);
+					DrawLineV(
+							CLITERAL(Vector2) { p.x, p.y - d },
+							CLITERAL(Vector2) { p.x, p.y + d },
+					GREEN);
+					// DrawCircleV(p, 1.0f, GREEN);
 					break;
 				}
 				if (total_dist >= max_size) {
@@ -158,6 +167,7 @@ int main(void) {
 			}
 			// DrawLineV(start, p, WHITE);
 		}
+		DrawFPS(0, 0);
 		EndDrawing();
 	}
 
