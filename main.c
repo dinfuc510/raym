@@ -4,7 +4,7 @@
 
 #define ARRLEN(arr) (sizeof((arr))/sizeof(*(arr)))
 #define MAX_HEIGHT 500
-#define RM_EPSILON 0.1
+#define MINIMUM_HIT_DISTANCE 0.1
 
 typedef enum ShapeType {
 	SQUARE = 0,
@@ -82,6 +82,7 @@ int main(void) {
 		{ SQUARE, { 600.0f, 400.0f }, 100.0f },
 	};
 
+	SetConfigFlags(FLAG_WINDOW_RESIZABLE);
 	InitWindow(700, 500, "Ray Marching");
 	SetTargetFPS(24);
 
@@ -90,18 +91,21 @@ int main(void) {
 		ClearBackground(GetColor(0x1e1e1eff));
 
 		draw_shapes(shapes, ARRLEN(shapes));
+		int screen_with = GetScreenWidth();
+		float step = MINIMUM_HIT_DISTANCE/(screen_with/3);
 
 		Vector2 start = GetMousePosition();
-		for (float a = -PI; a <= PI; a += RM_EPSILON/100) {
+		for (float a = -PI; a <= PI; a += step) {
 			Vector2 p = start;
 			float dist = distance_to_shapes(p, shapes, ARRLEN(shapes));
 			if (dist <= EPSILON) {
 				continue;
 			}
-			float g_dist = dist;
-			Vector2 ray = Vector2Add(start, CLITERAL(Vector2) { MAX_HEIGHT*sinf(a), MAX_HEIGHT*cosf(a) });
+			float total_dist = dist;
+			Vector2 ray = Vector2Add(start, CLITERAL(Vector2) { screen_with*sinf(a), screen_with*cosf(a) });
 			int upper_bound = 10;
 			while (1) {
+				// DrawCircleLinesV(p, dist, WHITE);
 				float k = Vector2Length(Vector2Subtract(p, ray)) / dist;
 				p = CLITERAL(Vector2) {
 					.x = (ray.x - p.x) / k + p.x,
@@ -109,16 +113,17 @@ int main(void) {
 				};
 				// printf("%f\n", dist);
 				dist = distance_to_shapes(p, shapes, ARRLEN(shapes));
-				g_dist += dist;
-				if (dist <= RM_EPSILON) {
+				total_dist += dist;
+				if (dist <= MINIMUM_HIT_DISTANCE) {
 					DrawLineV(start, p, GRAY);
 					DrawCircleV(p, 1.0f, GREEN);
 					break;
 				}
-				if (g_dist >= MAX_HEIGHT) {
+				if (total_dist >= screen_with) {
 					break;
 				}
 			}
+			// DrawLineV(start, p, WHITE);
 		}
 		EndDrawing();
 	}
